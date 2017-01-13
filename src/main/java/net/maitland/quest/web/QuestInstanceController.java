@@ -2,7 +2,7 @@ package net.maitland.quest.web;
 
 import net.maitland.quest.SaxQuestParser;
 import net.maitland.quest.model.Quest;
-import net.maitland.quest.model.QuestStateStation;
+import net.maitland.quest.player.QuestStateStation;
 import net.maitland.quest.player.ChoiceNotPossibleException;
 import net.maitland.quest.player.ConsolePlayer;
 import net.maitland.quest.player.QuestInstance;
