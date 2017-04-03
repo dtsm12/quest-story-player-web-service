@@ -1,20 +1,18 @@
 package net.maitland.quest.web;
 
-import net.maitland.quest.SaxQuestParser;
-import net.maitland.quest.model.Quest;
-import net.maitland.quest.player.QuestStateStation;
+import net.maitland.quest.model.*;
+import net.maitland.quest.parser.sax.SaxQuestParser;
 import net.maitland.quest.player.ChoiceNotPossibleException;
 import net.maitland.quest.player.ConsolePlayer;
-import net.maitland.quest.player.QuestInstance;
-import net.maitland.quest.player.QuestStateException;
 import org.apache.catalina.servlet4preview.http.HttpServletRequest;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.apache.commons.collections.map.HashedMap;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.fail;
 
@@ -24,57 +22,55 @@ import static org.junit.Assert.fail;
 @RestController
 public class QuestInstanceController {
 
-    private static final String QUEST_INSTANCE = "QUEST_INSTANCE";
+    Map<Integer, Quest> quests = new HashMap<>();
 
-    @RequestMapping("/beginQuest")
-    public QuestStateStation beginQuest(HttpServletRequest request) throws QuestStateException, ChoiceNotPossibleException {
-        QuestInstance questInstance = getQuestInstance(request, true);
-        return questInstance.getNextStation(null);
+    @RequestMapping(path = "/quest/{questId}/game", method = RequestMethod.GET)
+    public GameState newGame(@PathVariable Integer questId) throws QuestStateException, ChoiceNotPossibleException {
+        Quest quest = getQuest(questId);
+        Game game = quest.newGameInstance();
+        game.setChoiceId(QuestStation.START_STATION_ID);
+        GameState gameState = getGameState(quest, game);
+        return gameState;
     }
 
-    @RequestMapping("/questChoice")
-    public QuestStateStation beginQuest(HttpServletRequest request, @RequestParam(value = "choiceIndex") int choiceIndex) throws QuestStateException, ChoiceNotPossibleException {
-        QuestInstance questInstance = getQuestInstance(request);
-        return questInstance.getNextStation(choiceIndex);
+    @RequestMapping(path = "/quest/{questId}/game", method = RequestMethod.PUT)
+    public GameState gameChoice(@PathVariable Integer questId, @RequestBody Game game) throws QuestStateException, ChoiceNotPossibleException {
+        Quest quest = getQuest(questId);
+        GameState gameState = getGameState(quest, game);
+        return gameState;
     }
 
-    protected QuestInstance getQuestInstance(HttpServletRequest request)
-    {
-        return getQuestInstance(request, false);
+    protected GameState getGameState(Quest quest, Game game) throws ChoiceNotPossibleException {
+        GameStation gameStation = quest.getNextStation(game);
+        GameState gameState = new GameState();
+        gameState.setGame(game);
+        gameState.setGameStation(gameStation);
+        return gameState;
     }
 
-    protected QuestInstance getQuestInstance(HttpServletRequest request, boolean recreate)
-    {
-        HttpSession session = request.getSession(true);
-        QuestInstance questInstance = (QuestInstance) session.getAttribute(QUEST_INSTANCE);
+    protected Quest getQuest(int questId) {
+        Quest q = this.quests.get(questId);
 
-        if(questInstance == null || recreate)
-        {
-            questInstance = new QuestInstance(getQuest());
-            session.setAttribute(QUEST_INSTANCE, questInstance);
-        }
+        if(q == null) {
+            InputStream is = null;
 
-        return questInstance;
-    }
-
-    protected Quest getQuest() {
-        Quest q = null;
-        InputStream is = null;
-
-        try {
-            is = ConsolePlayer.class.getClassLoader().getResourceAsStream("bargames-quest.xml");
-            SaxQuestParser qp = new SaxQuestParser();
-            q = qp.parseQuest(is);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+            try {
+                is = ConsolePlayer.class.getClassLoader().getResourceAsStream("chance-quest.xml");
+                SaxQuestParser qp = new SaxQuestParser();
+                q = qp.parseQuest(is);
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                if (is != null) {
+                    try {
+                        is.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
+
+            this.quests.put(questId, q);
         }
         return q;
     }
