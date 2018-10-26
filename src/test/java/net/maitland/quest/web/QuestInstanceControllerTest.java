@@ -21,9 +21,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
@@ -77,11 +75,11 @@ public class QuestInstanceControllerTest {
         game.getQuestPath().push("station1");
         game.getQuestPath().push("station2");
 
-        List<Attribute> attributes = new ArrayList();
-        attributes.add(new NumberAttribute("attribute1", "0", "-1", "100"));
-        attributes.add(new StringAttribute("attribute2", "abc"));
-        attributes.add(new StateAttribute("attribute3", "true"));
-        game.updateState(attributes);
+        Map<String, Attribute> attributes = new HashMap<>();
+        attributes.put("attribute1", new NumberAttribute("attribute1", "0", "-1", "100"));
+        attributes.put("attribute2", new StringAttribute("attribute2", "abc"));
+        attributes.put("attribute3", new StateAttribute("attribute3", "true"));
+        game.setAttributes(attributes);
 
         ObjectMapper objectMapper = new ObjectMapper();
 

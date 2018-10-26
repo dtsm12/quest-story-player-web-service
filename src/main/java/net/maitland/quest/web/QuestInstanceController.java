@@ -41,7 +41,7 @@ public class QuestInstanceController {
         this.questParser = questParser;
     }
 
-    @RequestMapping(path = "/quest/{questId}/game", method = RequestMethod.GET)
+    @RequestMapping(path = "/quests/{questId}/game", method = RequestMethod.GET)
     public GameState newGame(@PathVariable Integer questId) throws QuestStateException, ChoiceNotPossibleException {
         Quest quest = getQuest(questId);
         Game game = quest.newGameInstance();
@@ -50,7 +50,7 @@ public class QuestInstanceController {
         return gameState;
     }
 
-    @RequestMapping(path = "/quest/{questId}/game", method = RequestMethod.PUT)
+    @RequestMapping(path = "/quests/{questId}/game", method = RequestMethod.PUT)
     public GameState gameChoice(@PathVariable Integer questId, @RequestBody String content) throws Exception {
         Quest quest = getQuest(questId);
         Map<String, Object> gameData = (new ObjectMapper()).readValue(content, Map.class);

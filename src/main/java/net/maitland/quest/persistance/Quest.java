@@ -28,6 +28,10 @@ public class Quest {
         this.questML = questML;
     }
 
+    public Quest(String author, String title, String questML) {
+        this(null, author, title, questML);
+    }
+
     @Override
     public String toString() {
         return String.format(
