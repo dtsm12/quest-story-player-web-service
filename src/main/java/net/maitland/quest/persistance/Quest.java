@@ -15,7 +15,7 @@ public class Quest {
     private String author;
     private String title;
 
-    @Column(columnDefinition="CLOB NOT NULL")
+    @Lob
     private String questML;
 
     public Quest() {

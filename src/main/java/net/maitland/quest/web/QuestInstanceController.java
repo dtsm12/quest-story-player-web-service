@@ -72,16 +72,6 @@ public class QuestInstanceController {
         Quest q = null;
         try {
 
-            if(hasBeenCreated == false)
-            {
-                String author = "David Maitland";
-                String title = "Chance Persistance";
-                String questML = getQuestML();
-                net.maitland.quest.persistance.Quest iq = new net.maitland.quest.persistance.Quest(null, author, title, questML);
-                this.questRepository.save(iq);
-                this.hasBeenCreated = true;
-            }
-
             q = this.quests.get(questId);
             if(q == null) {
                 net.maitland.quest.persistance.Quest iqs = this.questRepository.findAll().iterator().next();
