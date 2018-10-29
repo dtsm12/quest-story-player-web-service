@@ -7,6 +7,7 @@ import javax.persistence.*;
  */
 @Entity
 public class Quest {
+
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
@@ -32,11 +33,8 @@ public class Quest {
         this(null, author, title, questML);
     }
 
-    @Override
-    public String toString() {
-        return String.format(
-                "Quest[id=%d, author='%s', title='%s']",
-                id, author, title);
+    public String getQuestML() {
+        return questML;
     }
 
     public Long getId() {
@@ -51,7 +49,10 @@ public class Quest {
         return title;
     }
 
-    public String getQuestML() {
-        return questML;
+    @Override
+    public String toString() {
+        return String.format(
+                "Quest[id=%d, author='%s', title='%s']",
+                id, author, title);
     }
 }

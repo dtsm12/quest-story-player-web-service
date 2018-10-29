@@ -12,6 +12,7 @@ import java.util.List;
 @Repository
 public interface QuestRepository extends CrudRepository<Quest, Long> {
 
-    List<Quest> findByTitle(String title);
-    List<Quest> findByAuthor(String author);
+    List<QuestHeader> findByTitleStartingWithIgnoreCase(String title);
+    List<QuestHeader> findByTitleAndAuthorStartingWithIgnoreCase(String title, String author);
+    List<QuestHeader> findAllHeadersBy();
 }

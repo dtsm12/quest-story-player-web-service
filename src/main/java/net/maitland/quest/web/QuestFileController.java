@@ -2,6 +2,7 @@ package net.maitland.quest.web;
 
 import net.maitland.quest.parser.sax.SaxQuestParser;
 import net.maitland.quest.persistance.Quest;
+import net.maitland.quest.persistance.QuestHeader;
 import net.maitland.quest.persistance.QuestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -18,13 +19,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 
 @Controller
 @CrossOrigin
 public class QuestFileController {
 
-    private final QuestRepository questRepository;
+    QuestRepository questRepository;
 
     @Autowired
     public QuestFileController(QuestRepository questRepository) {
@@ -33,13 +33,22 @@ public class QuestFileController {
 
     @GetMapping("/files")
     public @ResponseBody
-    List<Quest> listQuestFiles(Model model) throws IOException {
+    List<QuestHeader> listQuestFiles(@RequestParam(name = "title", required = false) String title) throws IOException {
 
-        List<Quest> questList = new ArrayList<>();
-        Iterator<Quest> questIt = questRepository.findAll().iterator();
-        while(questIt.hasNext())
+        List<QuestHeader> questList = new ArrayList<>();
+        Iterable<QuestHeader> questIt = null;
+
+        if(title == null) {
+            questIt = questRepository.findAllHeadersBy();
+        }
+        else
         {
-            questList.add(questIt.next());
+            questIt = questRepository.findByTitleStartingWithIgnoreCase(title);
+        }
+
+        for (QuestHeader q : questIt)
+        {
+            questList.add(q);
         }
 
         return questList;
