@@ -11,9 +11,10 @@ const SESSION_MODE = 'SESSION_MODE';
 const SESSION_MODE_GAME = 'GAME';
 const SESSION_MODE_HELP = 'HELP';
 const SESSION_MODE_RESTART = 'RESTART';
+const SESSION_MODE_CHOOSE_GAME = 'CHOOSE_GAME';
 const SESSION_MODE_LINK_ACCOUNT = 'LINK_ACCOUNT';
 const APP_ID = 'amzn1.ask.skill.182e5cac-13df-49d6-82b7-085a15448dbc';
-const HOST = 'ec2-34-253-223-5.eu-west-1.compute.amazonaws.com';
+const HOST = 'ec2-34-243-53-24.eu-west-1.compute.amazonaws.com';
 const PORT = 8080;
 const DEBUG = true;
 const GAME_PATH_PREFIX = '/quests/';
@@ -29,7 +30,7 @@ const handlers = {
             linkAccount(this);
         }
         else { */
-        chooseGame(this);
+        chooseGame(this, true);
         //}
     },
     'ListStoriesIntent': function () {
@@ -46,11 +47,11 @@ const handlers = {
     },
     'AMAZON.YesIntent': function () {
         debug('YesIntent');
-        processYesNo(this, arguments[0]);
+        processYesNo(this, 'AMAZON.YesIntent');
     },
     'AMAZON.NoIntent': function () {
         debug('NoIntent');
-        processYesNo(this, arguments[0]);
+        processYesNo(this, 'AMAZON.NoIntent');
     },
     'AMAZON.HelpIntent': function () {
         debug('HelpIntent');
@@ -74,12 +75,12 @@ const handlers = {
     },
 };
 
-const chooseGame = function(alexa)
+const chooseGame = function(alexa, welcome)
 {
-    var welcomeMsg = 'Welcome to Quest Player. ';
-    welcomeMsg += 'To play an interactive story say "Play" and then the story title. ';
-    welcomeMsg += 'To list the stories say "List Stories". ';
-    alexa.emit(':ask', welcomeMsg, welcomeMsg);
+    var msg = welcome ? 'Welcome to Quest Player. ' : '';
+    msg += 'To play an interactive story say "Play" and then the story title. ';
+    msg += 'To list the stories say "List Stories". ';
+    alexa.emit(':ask', msg, msg);
 };
 
 const newGame = function (alexa, includeIntro, linkAccount) {
@@ -92,8 +93,16 @@ const clearGame = function (alexa) {
 };
 
 const endGame = function (alexa) {
-   clearGame(alexa);
-   alexa.emit(':tell', 'Goodbye');
+    clearGame(alexa);
+    // set mode to restart
+    alexa.attributes[SESSION_MODE] = SESSION_MODE_RESTART;
+    alexa.emit(':ask', 'Do you want to play again ?');
+};
+
+const changeGame = function (alexa) {
+    // set mode to choose
+    alexa.attributes[SESSION_MODE] = SESSION_MODE_CHOOSE_GAME;
+    alexa.emit(':ask', 'Do you want to play a different game ?');
 };
 
 const questListRequest = function (alexa) {
@@ -164,13 +173,12 @@ const questListResponseFunction = function (alexa, title)
 
 const questGameRequest = function (alexa, makeChoice, includeDesc, includeIntro, linkAccount) {
    var game = alexa.attributes[GAME];
+   var gameId = alexa.attributes[GAME_ID];
    var httpMethod = makeChoice ? 'PUT' : 'GET';
    var requestBody, gameId;
 
    if(game)
    {
-       gameId = game.id;
-
        if(makeChoice) {
           debug('existing game, id:'+gameId);
           debug('choiceIndex : ' + alexa.event.request.intent.slots.Choice.value);
@@ -181,7 +189,6 @@ const questGameRequest = function (alexa, makeChoice, includeDesc, includeIntro,
    }
    else
    {
-       gameId = alexa.attributes[GAME_ID];
        debug('new game, id:'+gameId);
    }
 
@@ -242,7 +249,10 @@ const processYesNo = function(alexa, intentName)
     debug('processYesNo, session mode: "' + sessionMode + '", intent:"' + intentName + '"');
 
     if (SESSION_MODE_RESTART == sessionMode) {
-        'AMAZON.YesIntent' == intentName ? newGame(alexa, false) : endGame(alexa);
+        'AMAZON.YesIntent' == intentName ? newGame(alexa, false) : changeGame(alexa);
+    }
+    else if (SESSION_MODE_CHOOSE_GAME == sessionMode) {
+        'AMAZON.YesIntent' == intentName ? chooseGame(alexa) : alexa.emit(':tell', 'Have a good day. Goodbye.');
     }
     else if (SESSION_MODE_HELP == sessionMode) {
         questGameRequest(alexa, false, 'AMAZON.YesIntent' == intentName, false);

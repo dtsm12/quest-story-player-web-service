@@ -32,7 +32,7 @@ public class QuestInstanceController {
 
     QuestRepository questRepository;
     QuestParser questParser;
-    Map<Integer, Quest> quests = new HashMap<>();
+    Map<Long, Quest> quests = new HashMap<>();
     boolean hasBeenCreated = false;
 
     @Autowired
@@ -42,7 +42,7 @@ public class QuestInstanceController {
     }
 
     @RequestMapping(path = "/quests/{questId}/game", method = RequestMethod.GET)
-    public GameState newGame(@PathVariable Integer questId) throws QuestStateException, ChoiceNotPossibleException {
+    public GameState newGame(@PathVariable Long questId) throws QuestStateException, ChoiceNotPossibleException {
         Quest quest = getQuest(questId);
         Game game = quest.newGameInstance();
         game.setChoiceId(QuestStation.START_STATION_ID);
@@ -51,7 +51,7 @@ public class QuestInstanceController {
     }
 
     @RequestMapping(path = "/quests/{questId}/game", method = RequestMethod.PUT)
-    public GameState gameChoice(@PathVariable Integer questId, @RequestBody String content) throws Exception {
+    public GameState gameChoice(@PathVariable Long questId, @RequestBody String content) throws Exception {
         Quest quest = getQuest(questId);
         Map<String, Object> gameData = (new ObjectMapper()).readValue(content, Map.class);
         Game game = Game.fromCollectionStructure(gameData);
@@ -67,14 +67,14 @@ public class QuestInstanceController {
         return gameState;
     }
 
-    protected Quest getQuest(int questId) throws QuestStateException {
+    protected Quest getQuest(Long questId) throws QuestStateException {
 
         Quest q = null;
         try {
 
             q = this.quests.get(questId);
             if(q == null) {
-                net.maitland.quest.persistance.Quest iqs = this.questRepository.findAll().iterator().next();
+                net.maitland.quest.persistance.Quest iqs = this.questRepository.findOne(questId);
                 q = this.questParser.parseQuest(new ByteArrayInputStream(iqs.getQuestML().getBytes(StandardCharsets.UTF_8)));
             }
         } catch (IOException e) {
@@ -83,54 +83,4 @@ public class QuestInstanceController {
 
         return q;
     }
-
-    protected String getQuestML() {
-
-        String questML = "";
-        InputStream is = null;
-
-        try {
-            is = ConsolePlayer.class.getClassLoader().getResourceAsStream("chance-quest.xml");
-            questML = IOUtils.toString(is, "UTF-8");
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        return questML;
-    }
-/*
-    protected Quest getQuest(int questId) {
-        Quest q = this.quests.get(questId);
-
-        if(q == null) {
-            InputStream is = null;
-
-            try {
-                is = ConsolePlayer.class.getClassLoader().getResourceAsStream("chance-quest.xml");
-                SaxQuestParser qp = new SaxQuestParser();
-                q = qp.parseQuest(is);
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (is != null) {
-                    try {
-                        is.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            this.quests.put(questId, q);
-        }
-        return q;
-    }*/
 }
