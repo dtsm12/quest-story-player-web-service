@@ -60,10 +60,30 @@ public class QuestInstanceController {
     }
 
     protected GameState getGameState(Quest quest, Game game) throws ChoiceNotPossibleException {
-        GameStation gameStation = quest.getNextStation(game);
+
+        GameStation gameStation = new GameStation();
+        gameStation.setText("");
         GameState gameState = new GameState();
         gameState.setGame(game);
         gameState.setGameStation(gameStation);
+
+        // compile stations until user doesn't have just one choice
+        GameStation nextGameStation = null;
+        while (nextGameStation == null) {
+            nextGameStation = quest.getNextStation(game);
+            gameStation.setId(nextGameStation.getId());
+            gameStation.setChoices(nextGameStation.getChoices());
+            gameStation.setText(gameStation.getText() + nextGameStation.getText());
+
+            // if only one choice add the text for that choice and set-up to take that choice
+            if(nextGameStation.getChoices().size() == 1)
+            {
+                gameStation.setText(gameStation.getText() + nextGameStation.getChoices().get(0).getText());
+                game.setChoiceIndex(1);
+                nextGameStation = null;
+            }
+        }
+
         return gameState;
     }
 
